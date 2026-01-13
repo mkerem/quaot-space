@@ -1,0 +1,19 @@
+{
+  "name": "quote-constellation",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "generate-embeddings": "node scripts/generate-embeddings.js"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "@xenova/transformers": "^2.6.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "openai": "^4.20.0"
+  }
+}

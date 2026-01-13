@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote Constellation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="constellation"></canvas>
+
+    <!-- Quote display overlay -->
+    <div id="quote-overlay" class="hidden">
+      <div id="quote-content">
+        <div id="quote-category"></div>
+        <blockquote id="quote-text"></blockquote>
+        <cite id="quote-attribution"></cite>
+      </div>
+    </div>
+
+    <!-- Add quote modal -->
+    <div id="add-quote-modal" class="hidden">
+      <div id="add-quote-container">
+        <textarea id="quote-input" placeholder="Enter your quote..."></textarea>
+        <input type="text" id="attribution-input" placeholder="Attribution (optional)">
+        <div id="add-quote-hint">Press Enter to add &bull; Shift+Enter for line break &bull; ESC to cancel</div>
+      </div>
+    </div>
+
+    <!-- Contradiction mode toggle -->
+    <button id="contradiction-toggle" title="Contradiction Mode">&#9889;</button>
+
+    <!-- Initial hint -->
+    <div id="hint">
+      Navigate with mouse/trackpad. Click to read. Press 'A' to add your own.
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading">
+      <div class="loader"></div>
+      <span>Loading wisdom...</span>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
