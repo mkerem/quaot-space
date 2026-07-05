@@ -307,6 +307,24 @@ export function addQuote(text, attribution = null) {
   return newQuote;
 }
 
+// Update an existing quote
+export function updateQuote(quoteId, text, attribution = null) {
+  const quotes = loadQuotes();
+  const quoteIndex = quotes.findIndex((quote) => quote.id === quoteId);
+  if (quoteIndex === -1) return null;
+
+  const updatedQuote = {
+    ...quotes[quoteIndex],
+    text: text.trim(),
+    attribution: attribution?.trim() || null
+  };
+
+  quotes[quoteIndex] = updatedQuote;
+  saveQuotes(quotes);
+
+  return updatedQuote;
+}
+
 // Load embeddings from localStorage
 export function loadEmbeddings() {
   try {

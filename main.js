@@ -1,11 +1,8 @@
 // Quote Constellation - Main Entry Point
 import { Constellation } from './constellation.js';
-import { loadQuotes, addQuote, loadEmbeddings, saveEmbeddings, setEmbedding } from './quotes.js';
+import { loadQuotes, addQuote, updateQuote, loadEmbeddings, setEmbedding } from './quotes.js';
 import {
   generateEmbedding,
-  reduceDimensions,
-  addToLayout,
-  findNearestNeighbors,
   getAllContradictions
 } from './embeddings.js';
 import { categories, categorizeQuote, getPositionInCluster, quoteCategoryMap } from './categories.js';
@@ -17,6 +14,8 @@ class App {
     this.embeddings = {};
     this.positions = {};
     this.isAddingQuote = false;
+    this.selectedQuote = null;
+    this.editingQuoteId = null;
     this.contradictionMode = false;
     this.contradictionPairs = [];
 
@@ -33,8 +32,12 @@ class App {
     this.addQuoteModal = document.getElementById('add-quote-modal');
     this.quoteInput = document.getElementById('quote-input');
     this.attributionInput = document.getElementById('attribution-input');
+    this.saveQuoteButton = document.getElementById('save-quote-button');
     this.contradictionToggle = document.getElementById('contradiction-toggle');
+    this.editHint = document.getElementById('quote-edit-hint');
+    this.addQuoteHint = document.getElementById('add-quote-hint');
     this.hint = document.getElementById('hint');
+    this.statusToast = document.getElementById('status-toast');
     this.loading = document.getElementById('loading');
 
     // Initialize constellation
@@ -142,6 +145,8 @@ class App {
 
     // Quote input handlers
     this.quoteInput.addEventListener('keydown', (e) => this.onQuoteInputKeyDown(e));
+    this.attributionInput.addEventListener('keydown', (e) => this.onQuoteInputKeyDown(e));
+    this.saveQuoteButton.addEventListener('click', () => this.submitNewQuote());
 
     // Contradiction toggle
     this.contradictionToggle.addEventListener('click', () => this.toggleContradictionMode());
@@ -169,6 +174,8 @@ class App {
 
     if (e.key === 'a' || e.key === 'A') {
       this.openAddQuoteModal();
+    } else if ((e.key === 'e' || e.key === 'E') && this.selectedQuote?.userAdded) {
+      this.openAddQuoteModal(this.selectedQuote);
     } else if (e.key === 'Escape') {
       if (!this.addQuoteModal.classList.contains('hidden')) {
         this.closeAddQuoteModal();
@@ -179,7 +186,11 @@ class App {
   }
 
   onQuoteInputKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isAttributionInput = e.target === this.attributionInput;
+    const shouldSubmitFromTextarea = e.target === this.quoteInput && e.key === 'Enter' && !e.shiftKey;
+    const shouldSubmitFromAttribution = isAttributionInput && e.key === 'Enter';
+
+    if (shouldSubmitFromTextarea || shouldSubmitFromAttribution) {
       e.preventDefault();
       this.submitNewQuote();
     } else if (e.key === 'Escape') {
@@ -189,12 +200,14 @@ class App {
 
   onQuoteSelect(quote) {
     if (!quote) return;
+    this.selectedQuote = quote;
 
     // Show quote overlay with category
     const category = categories[quote.category];
     this.quoteCategory.textContent = category ? category.name : '';
     this.quoteText.textContent = quote.text;
     this.quoteAttribution.textContent = quote.attribution || '';
+    this.editHint.classList.toggle('hidden', !quote.userAdded);
     this.quoteOverlay.classList.remove('hidden');
   }
 
@@ -203,18 +216,55 @@ class App {
   }
 
   closeQuoteOverlay() {
+    this.selectedQuote = null;
     this.quoteOverlay.classList.add('hidden');
   }
 
-  openAddQuoteModal() {
+  openAddQuoteModal(quoteToEdit = null) {
+    this.editingQuoteId = quoteToEdit?.id || null;
     this.addQuoteModal.classList.remove('hidden');
-    this.quoteInput.value = '';
-    this.attributionInput.value = '';
+    this.quoteInput.value = quoteToEdit?.text || '';
+    this.attributionInput.value = quoteToEdit?.attribution || '';
+    this.addQuoteHint.textContent = this.editingQuoteId
+      ? 'Press Enter to save changes • Shift+Enter for line break • ESC to cancel'
+      : 'Press Enter to add • Shift+Enter for line break • ESC to cancel';
     this.quoteInput.focus();
   }
 
   closeAddQuoteModal() {
+    this.editingQuoteId = null;
     this.addQuoteModal.classList.add('hidden');
+  }
+
+  showStatusMessage(message, duration = 3200) {
+    this.statusToast.textContent = message;
+    this.statusToast.classList.remove('hidden');
+
+    clearTimeout(this.statusToastTimeout);
+    this.statusToastTimeout = setTimeout(() => {
+      this.statusToast.classList.add('hidden');
+    }, duration);
+  }
+
+  recalculatePositions() {
+    const categoryQuotes = {};
+    this.positions = {};
+
+    for (const quote of this.quotes) {
+      const categoryId = quoteCategoryMap[quote.id] || categorizeQuote(quote.text);
+      quote.category = categoryId;
+
+      if (!categoryQuotes[categoryId]) {
+        categoryQuotes[categoryId] = [];
+      }
+      categoryQuotes[categoryId].push(quote);
+    }
+
+    for (const [categoryId, quotes] of Object.entries(categoryQuotes)) {
+      quotes.forEach((quote, index) => {
+        this.positions[quote.id] = getPositionInCluster(categoryId, index, quotes.length);
+      });
+    }
   }
 
   async submitNewQuote() {
@@ -222,12 +272,7 @@ class App {
     if (!text) return;
 
     const attribution = this.attributionInput.value.trim() || null;
-
-    // Add quote to storage
-    const newQuote = addQuote(text, attribution);
-
-    // Categorize the new quote
-    newQuote.category = categorizeQuote(text);
+    const isEditing = Boolean(this.editingQuoteId);
 
     // Close modal
     this.closeAddQuoteModal();
@@ -237,22 +282,37 @@ class App {
     this.loading.classList.remove('hidden');
 
     try {
-      // Position in the appropriate category cluster
-      const categoryQuotes = this.quotes.filter(q => q.category === newQuote.category);
-      const position = getPositionInCluster(newQuote.category, categoryQuotes.length, categoryQuotes.length + 1);
-      this.positions[newQuote.id] = position;
+      let activeQuote;
 
-      // Update quotes list
-      this.quotes.push(newQuote);
+      if (isEditing) {
+        const updatedQuote = updateQuote(this.editingQuoteId, text, attribution);
+        if (!updatedQuote) {
+          throw new Error('Quote not found for editing');
+        }
 
-      // Add star to constellation with animation
-      this.constellation.addStar(newQuote, position);
+        this.quotes = this.quotes.map((quote) => (
+          quote.id === updatedQuote.id ? { ...quote, ...updatedQuote } : quote
+        ));
+        activeQuote = updatedQuote;
+      } else {
+        const newQuote = addQuote(text, attribution);
+        this.quotes.push(newQuote);
+        activeQuote = newQuote;
+      }
+
+      this.recalculatePositions();
+      this.constellation.updateConstellation(this.quotes, this.positions, this.embeddings);
+
+      const category = categories[activeQuote.category];
+      const categoryName = category ? category.name : 'Uncategorized';
+      const actionVerb = isEditing ? 'updated in' : 'landed in';
+      this.showStatusMessage(`✨ Your quote ${actionVerb} “${categoryName}.”`);
 
       // Try to generate embedding in background (for semantic features)
       try {
         const embedding = await generateEmbedding(text);
-        setEmbedding(newQuote.id, embedding);
-        this.embeddings[newQuote.id] = embedding;
+        setEmbedding(activeQuote.id, embedding);
+        this.embeddings[activeQuote.id] = embedding;
 
         // Update contradictions
         this.contradictionPairs = getAllContradictions(this.quotes, this.embeddings);

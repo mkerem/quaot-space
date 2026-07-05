@@ -110,6 +110,17 @@ body:active {
   content: '';
 }
 
+#quote-edit-hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  letter-spacing: 0.04em;
+}
+
+#quote-edit-hint.hidden {
+  display: none;
+}
+
 /* Add quote modal */
 #add-quote-modal {
   position: absolute;
@@ -182,6 +193,30 @@ body:active {
   color: #444;
 }
 
+#save-quote-button {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.75rem 1rem;
+  font-family: 'Crimson Text', Georgia, serif;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  color: #ddd;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#save-quote-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+#save-quote-button:active {
+  transform: translateY(1px);
+}
+
 #add-quote-hint {
   margin-top: 1rem;
   font-size: 0.9rem;
@@ -236,6 +271,29 @@ body:active {
 
 #hint.hidden {
   opacity: 0;
+}
+
+#status-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 4.75rem;
+  transform: translateX(-50%);
+  z-index: 12;
+  max-width: min(90vw, 640px);
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.92);
+  color: #d6d6d6;
+  font-size: 0.95rem;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+#status-toast.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Loading indicator - full screen black overlay */
