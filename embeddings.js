@@ -121,24 +121,17 @@ export function getAllContradictions(allQuotes, embeddings, threshold = 0.1) {
       const emb2 = embeddings[quote2.id];
       if (!emb2) continue;
 
-      const similarity = cosineSimilarity(emb1, emb2);
-
-      // Consider it a contradiction if similarity is below threshold
-      if (similarity < threshold) {
-        pairs.push({
-          quote1,
-          quote2,
-          similarity
-        });
-      }
+      pairs.push({ quote1, quote2, similarity: cosineSimilarity(emb1, emb2) });
     }
   }
 
   // Sort by lowest similarity first (strongest contradictions)
   pairs.sort((a, b) => a.similarity - b.similarity);
 
-  // Return top 20% of pairs or at least 10
-  const count = Math.max(10, Math.floor(pairs.length * 0.2));
+  // Take pairs under the threshold, but always keep a floor of the 10
+  // most-dissimilar pairs so the mode is never visually empty.
+  const below = pairs.filter(p => p.similarity < threshold).length;
+  const count = Math.max(Math.min(10, pairs.length), Math.floor(below * 0.2));
   return pairs.slice(0, count);
 }
 

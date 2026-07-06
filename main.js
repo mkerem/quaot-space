@@ -1,13 +1,7 @@
 // Quote Constellation - Main Entry Point
 import { Constellation } from './constellation.js';
-import { loadQuotes, addQuote, loadEmbeddings, saveEmbeddings, setEmbedding } from './quotes.js';
-import {
-  generateEmbedding,
-  reduceDimensions,
-  addToLayout,
-  findNearestNeighbors,
-  getAllContradictions
-} from './embeddings.js';
+import { loadQuotes, addQuote, loadEmbeddings, setEmbedding } from './quotes.js';
+import { generateEmbedding, getAllContradictions } from './embeddings.js';
 import { categories, categorizeQuote, getPositionInCluster, quoteCategoryMap } from './categories.js';
 
 class App {
@@ -73,8 +67,9 @@ class App {
     this.quotes = loadQuotes();
     console.log(`Loaded ${this.quotes.length} quotes`);
 
-    // Load embeddings from localStorage
-    this.embeddings = loadEmbeddings();
+    // Precomputed seed embeddings, overridden by any locally computed ones
+    const precomputed = await this.loadPrecomputedEmbeddings();
+    this.embeddings = { ...precomputed, ...loadEmbeddings() };
 
     // Categorize quotes and position them in themed clusters
     const categoryQuotes = {}; // categoryId -> [quotes]
@@ -105,12 +100,24 @@ class App {
     this.contradictionPairs = getAllContradictions(this.quotes, this.embeddings);
     this.constellation.showContradictions(this.contradictionPairs);
 
-    // Compute embeddings in background (non-blocking) - skip for now to keep it fast
-    // The category-based positioning works well without semantic embeddings
+    // Fill any missing embeddings in the background (normally only quotes
+    // added before this feature shipped; new quotes embed on add)
     const quotesNeedingEmbeddings = this.quotes.filter(q => !this.embeddings[q.id]);
-    if (quotesNeedingEmbeddings.length > 0 && Object.keys(this.embeddings).length > 0) {
-      // Only compute if we already have some embeddings cached (returning user)
+    if (quotesNeedingEmbeddings.length > 0) {
       this.computeEmbeddingsInBackground(quotesNeedingEmbeddings);
+    }
+  }
+
+  // Precomputed seed embeddings shipped as a static asset (public/data/)
+  async loadPrecomputedEmbeddings() {
+    try {
+      const res = await fetch('./data/precomputed.json');
+      if (!res.ok) return {};
+      const data = await res.json();
+      return data.embeddings || {};
+    } catch (e) {
+      console.warn('Failed to load precomputed embeddings:', e);
+      return {};
     }
   }
 
