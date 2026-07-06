@@ -278,4 +278,4 @@ class App {
 }
 
 // Start the app
-new App();
+window.app = new App();

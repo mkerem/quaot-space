@@ -255,7 +255,6 @@ export class Constellation {
 
   // Add a single star to the constellation
   addStar(quote, position) {
-    this.quotes.push(quote);
     this.positions[quote.id] = position;
 
     const star = this.createStar(quote, position);
