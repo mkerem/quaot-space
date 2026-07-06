@@ -78,6 +78,9 @@ export class Constellation {
     // Event listeners
     window.addEventListener('resize', () => this.onResize());
     this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    this.container.addEventListener('pointerdown', (e) => {
+      this.pointerDownAt = { x: e.clientX, y: e.clientY };
+    });
     this.container.addEventListener('click', (e) => this.onClick(e));
 
     // Animation time
@@ -431,35 +434,12 @@ export class Constellation {
     return null;
   }
 
-  // Get category label at mouse position
+  // Get category label at mouse position (raycasts the actual label quad;
+  // the old hand-rolled 0.25-NDC radius swallowed taps on nearby stars)
   getCategoryAtMouse() {
-    let closestCategory = null;
-    let closestDistance = Infinity;
-
-    this.categoryLabels.forEach((label, categoryId) => {
-      const labelPos = label.position.clone();
-
-      // Project label position to screen space (NDC: -1 to 1)
-      const screenPos = labelPos.clone().project(this.camera);
-
-      // Skip if behind camera
-      if (screenPos.z > 1) return;
-
-      // Calculate distance in NDC space
-      const dx = screenPos.x - this.mouse.x;
-      const dy = screenPos.y - this.mouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      // Click range - generous for better UX
-      const clickRange = 0.25;
-
-      if (dist < clickRange && dist < closestDistance) {
-        closestDistance = dist;
-        closestCategory = categoryId;
-      }
-    });
-
-    return closestCategory;
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hits = this.raycaster.intersectObjects(this.labelsGroup.children, false);
+    return hits.length > 0 ? hits[0].object.userData.categoryId : null;
   }
 
   // Focus on a category - highlight its quotes and zoom in
@@ -510,9 +490,13 @@ export class Constellation {
   }
 
   // Event handlers
-  onMouseMove(event) {
+  setMouseFromEvent(event) {
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  }
+
+  onMouseMove(event) {
+    this.setMouseFromEvent(event);
 
     // Check for category label hover
     const categoryId = this.getCategoryAtMouse();
@@ -539,29 +523,31 @@ export class Constellation {
   }
 
   onClick(event) {
-    // Check for category label click first
-    const categoryId = this.getCategoryAtMouse();
-    if (categoryId) {
-      this.focusOnCategory(categoryId);
+    // Ignore click events that conclude an orbit drag
+    if (this.pointerDownAt && !isTap(this.pointerDownAt.x, this.pointerDownAt.y, event.clientX, event.clientY)) {
       return;
     }
+    this.setMouseFromEvent(event);
 
-    // Check for quote click
-    const quote = this.getQuoteAtMouse();
-    if (quote) {
-      // If we're focused on a category and click a quote in it, show the quote
-      if (this.focusedCategory && quote.category === this.focusedCategory) {
-        this.onQuoteSelect?.(quote);
-      } else if (!this.focusedCategory) {
-        this.focusOnStar(quote.id);
-        this.onQuoteSelect?.(quote);
-      }
-      return;
-    }
+    const route = routeClick({
+      quote: this.getQuoteAtMouse(),
+      categoryId: this.getCategoryAtMouse(),
+      focusedCategory: this.focusedCategory
+    });
 
-    // Click on empty space - unfocus if focused
-    if (this.focusedCategory) {
-      this.unfocusCategory();
+    switch (route.action) {
+      case 'selectQuote':
+        if (route.alsoFocusStar) {
+          this.focusOnStar(route.quote.id);
+        }
+        this.onQuoteSelect?.(route.quote);
+        break;
+      case 'focusCategory':
+        this.focusOnCategory(route.categoryId);
+        break;
+      case 'unfocusCategory':
+        this.unfocusCategory();
+        break;
     }
   }
 
