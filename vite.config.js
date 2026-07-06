@@ -3,16 +3,12 @@ import { resolve } from 'path';
 
 export default defineConfig({
   base: './',
-  root: '.',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
       input: resolve(__dirname, 'index-dev.html'),
     },
-  },
-  optimizeDeps: {
-    exclude: ['@xenova/transformers']
   },
   server: {
     headers: {
