@@ -54,14 +54,16 @@ export const categories = {
 
 // Categorize a quote based on its text
 export function categorizeQuote(text) {
-  const lowerText = text.toLowerCase();
+  // Whole-word matching: substring matching made e.g. 'do' (courage)
+  // match inside 'wisdom' and 'freedom'.
+  const words = new Set(text.toLowerCase().split(/[^a-z']+/));
   let bestCategory = 'wisdom'; // default
   let bestScore = 0;
 
   for (const [categoryId, category] of Object.entries(categories)) {
     let score = 0;
     for (const keyword of category.keywords) {
-      if (lowerText.includes(keyword)) {
+      if (words.has(keyword)) {
         score += 1;
       }
     }
