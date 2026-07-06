@@ -2,6 +2,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { categories } from './categories.js';
+import { computeStarOpacity, computeStarScale, routeClick, isTap } from './constellation-helpers.js';
+
+// Star palette: uniform silver, with a gold tinge on the selected star
+const GLOW_SILVER = new THREE.Color(0xffffff);
+const CORE_SILVER = new THREE.Color(0xf0f0f0);
+const GLOW_GOLD = new THREE.Color(0xe8b05c);
+const CORE_GOLD = new THREE.Color(0xffe0a3);
 
 export class Constellation {
   constructor(container, onQuoteSelect, onQuoteHover, onCategoryHover) {
@@ -77,6 +84,9 @@ export class Constellation {
     // Event listeners
     window.addEventListener('resize', () => this.onResize());
     this.container.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    this.container.addEventListener('pointerdown', (e) => {
+      this.pointerDownAt = { x: e.clientX, y: e.clientY };
+    });
     this.container.addEventListener('click', (e) => this.onClick(e));
 
     // Animation time
@@ -92,39 +102,36 @@ export class Constellation {
     const brightness = Math.min(0.5 + quote.text.length / 500, 1);
     const size = 0.8 + brightness * 0.4;
 
-    // Get category color
-    const category = categories[quote.category];
-    const categoryColor = category ? new THREE.Color(category.color) : new THREE.Color(0x88aaff);
-
-    // Create glow sprite with category color
+    // Uniform silver glow (selected star gets a gold tinge in animate())
     const spriteMaterial = new THREE.SpriteMaterial({
       map: this.createGlowTexture(),
-      color: categoryColor,
+      color: GLOW_SILVER,
       transparent: true,
-      opacity: 0.6 * brightness,
+      opacity: 0.4 * brightness,
       blending: THREE.AdditiveBlending
     });
 
     const sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(size * 4, size * 4, 1);
-    sprite.position.set(position.x, position.y, position.z);
+    sprite.userData.baseOpacity = 0.4 * brightness;
 
-    // Core point with category tint
+    // Silver core point
     const coreGeometry = new THREE.SphereGeometry(size * 0.3, 16, 16);
-    const coreColor = categoryColor.clone().lerp(new THREE.Color(1, 1, 1), 0.7);
     const coreMaterial = new THREE.MeshBasicMaterial({
-      color: coreColor,
+      color: CORE_SILVER,
       transparent: true,
       opacity: 0.9
     });
     const core = new THREE.Mesh(coreGeometry, coreMaterial);
-    core.position.copy(sprite.position);
+    core.userData.baseOpacity = 0.9;
 
-    // Group star elements
+    // Group star elements; children stay at the group origin so animate()
+    // can float the group without double-counting the position.
     const group = new THREE.Group();
     group.add(sprite);
     group.add(core);
-    group.userData = { quote, originalPosition: position };
+    group.position.set(position.x, position.y, position.z);
+    group.userData = { quote, originalPosition: position, introScale: 1 };
 
     return group;
   }
@@ -171,7 +178,7 @@ export class Constellation {
       category.position.y + 25,
       category.position.z
     );
-    sprite.userData = { categoryId, category, count };
+    sprite.userData = { categoryId, category, count, baseOpacity: 0.5 + normalizedSize * 0.4 };
 
     return sprite;
   }
@@ -185,9 +192,9 @@ export class Constellation {
 
     const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    gradient.addColorStop(0.2, 'rgba(200, 220, 255, 0.8)');
-    gradient.addColorStop(0.5, 'rgba(150, 180, 255, 0.3)');
-    gradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+    gradient.addColorStop(0.2, 'rgba(218, 222, 230, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(176, 180, 190, 0.3)');
+    gradient.addColorStop(1, 'rgba(140, 144, 154, 0)');
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 128, 128);
@@ -214,8 +221,9 @@ export class Constellation {
     });
     this.categoryLabels.clear();
 
-    // Reset focused category
+    // Reset focused/selected state (stars are being rebuilt)
     this.focusedCategory = null;
+    this.selectedStar = null;
 
     // Count quotes per category
     const categoryCounts = {};
@@ -249,7 +257,6 @@ export class Constellation {
 
   // Add a single star to the constellation
   addStar(quote, position) {
-    this.quotes.push(quote);
     this.positions[quote.id] = position;
 
     const star = this.createStar(quote, position);
@@ -257,27 +264,27 @@ export class Constellation {
     this.stars.set(quote.id, star);
 
     // Animate the star appearing
-    star.scale.set(0, 0, 0);
     this.animateStarIn(star);
 
     return star;
   }
 
-  // Animate star appearing
+  // Animate star appearing (writes introScale; animate() applies it)
   animateStarIn(star) {
     const startTime = this.clock.getElapsedTime();
     const duration = 0.8;
+    star.userData.introScale = 0;
 
     const animate = () => {
       const elapsed = this.clock.getElapsedTime() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      // Elastic easing
       const eased = 1 - Math.pow(1 - progress, 3) * Math.cos(progress * Math.PI * 2);
-      star.scale.set(eased, eased, eased);
+      star.userData.introScale = eased;
 
       if (progress < 1) {
         requestAnimationFrame(animate);
+      } else {
+        star.userData.introScale = 1;
       }
     };
 
@@ -374,19 +381,10 @@ export class Constellation {
     this.contradictionLines = [];
   }
 
-  // Toggle contradiction mode
+  // Toggle contradiction mode (opacity is derived per-frame in animate())
   setContradictionMode(enabled) {
     this.contradictionMode = enabled;
     this.contradictionGroup.visible = enabled;
-
-    // Dim stars when in contradiction mode
-    this.stars.forEach((star) => {
-      star.children.forEach((child) => {
-        if (child.material) {
-          child.material.opacity = enabled ? child.material.opacity * 0.5 : child.material.opacity * 2;
-        }
-      });
-    });
   }
 
   // Focus camera on a specific star
@@ -419,15 +417,6 @@ export class Constellation {
     this.selectedStar = star;
   }
 
-  // Highlight a star
-  highlightStar(quoteId, highlight = true) {
-    const star = this.stars.get(quoteId);
-    if (!star) return;
-
-    const scale = highlight ? 1.5 : 1;
-    star.scale.set(scale, scale, scale);
-  }
-
   // Get quote at mouse position
   getQuoteAtMouse() {
     this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -446,35 +435,12 @@ export class Constellation {
     return null;
   }
 
-  // Get category label at mouse position
+  // Get category label at mouse position (raycasts the actual label quad;
+  // the old hand-rolled 0.25-NDC radius swallowed taps on nearby stars)
   getCategoryAtMouse() {
-    let closestCategory = null;
-    let closestDistance = Infinity;
-
-    this.categoryLabels.forEach((label, categoryId) => {
-      const labelPos = label.position.clone();
-
-      // Project label position to screen space (NDC: -1 to 1)
-      const screenPos = labelPos.clone().project(this.camera);
-
-      // Skip if behind camera
-      if (screenPos.z > 1) return;
-
-      // Calculate distance in NDC space
-      const dx = screenPos.x - this.mouse.x;
-      const dy = screenPos.y - this.mouse.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      // Click range - generous for better UX
-      const clickRange = 0.25;
-
-      if (dist < clickRange && dist < closestDistance) {
-        closestDistance = dist;
-        closestCategory = categoryId;
-      }
-    });
-
-    return closestCategory;
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hits = this.raycaster.intersectObjects(this.labelsGroup.children, false);
+    return hits.length > 0 ? hits[0].object.userData.categoryId : null;
   }
 
   // Focus on a category - highlight its quotes and zoom in
@@ -482,42 +448,7 @@ export class Constellation {
     const category = categories[categoryId];
     if (!category) return;
 
-    // If clicking same category, unfocus
-    if (this.focusedCategory === categoryId) {
-      this.unfocusCategory();
-      return;
-    }
-
     this.focusedCategory = categoryId;
-
-    // Update star visibility - highlight matching, dim others
-    this.stars.forEach((star, quoteId) => {
-      const quote = star.userData.quote;
-      const isInCategory = quote && quote.category === categoryId;
-
-      star.children.forEach((child) => {
-        if (child.material) {
-          if (isInCategory) {
-            // Highlight: bright and larger
-            child.material.opacity = 1;
-            star.scale.set(1.5, 1.5, 1.5);
-          } else {
-            // Dim: faded and smaller
-            child.material.opacity = 0.15;
-            star.scale.set(0.7, 0.7, 0.7);
-          }
-        }
-      });
-    });
-
-    // Dim other category labels
-    this.categoryLabels.forEach((label, catId) => {
-      if (catId === categoryId) {
-        label.material.opacity = 1;
-      } else {
-        label.material.opacity = 0.2;
-      }
-    });
 
     // Zoom camera to category center
     const targetPosition = new THREE.Vector3(
@@ -554,40 +485,24 @@ export class Constellation {
     animateZoom();
   }
 
-  // Unfocus category - restore all stars
+  // Unfocus category - stars and labels restore via derived state
   unfocusCategory() {
     this.focusedCategory = null;
+  }
 
-    // Restore all stars
-    this.stars.forEach((star) => {
-      star.scale.set(1, 1, 1);
-      star.children.forEach((child) => {
-        if (child.material) {
-          // Restore original opacity based on quote length
-          const quote = star.userData.quote;
-          const brightness = Math.min(0.5 + (quote?.text?.length || 100) / 500, 1);
-          if (child instanceof THREE.Sprite) {
-            child.material.opacity = 0.6 * brightness;
-          } else {
-            child.material.opacity = 0.9;
-          }
-        }
-      });
-    });
-
-    // Restore all labels
-    this.categoryLabels.forEach((label, catId) => {
-      const count = label.userData.count || 5;
-      const maxCount = Math.max(...Array.from(this.categoryLabels.values()).map(l => l.userData.count || 5), 1);
-      const normalizedSize = 0.4 + (count / maxCount) * 0.6;
-      label.material.opacity = 0.5 + normalizedSize * 0.4;
-    });
+  // Clear the selected star (drops its gold tinge)
+  clearSelection() {
+    this.selectedStar = null;
   }
 
   // Event handlers
-  onMouseMove(event) {
+  setMouseFromEvent(event) {
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  }
+
+  onMouseMove(event) {
+    this.setMouseFromEvent(event);
 
     // Check for category label hover
     const categoryId = this.getCategoryAtMouse();
@@ -600,16 +515,11 @@ export class Constellation {
 
     if (quote && quote !== this.hoveredStar?.userData?.quote) {
       // New hover
-      if (this.hoveredStar) {
-        this.highlightStar(this.hoveredStar.userData.quote.id, false);
-      }
       this.hoveredStar = this.stars.get(quote.id);
-      this.highlightStar(quote.id, true);
       this.onQuoteHover?.(quote);
       this.container.style.cursor = 'pointer';
     } else if (!quote && this.hoveredStar) {
       // End hover
-      this.highlightStar(this.hoveredStar.userData.quote.id, false);
       this.hoveredStar = null;
       this.onQuoteHover?.(null);
       this.container.style.cursor = 'grab';
@@ -619,29 +529,37 @@ export class Constellation {
   }
 
   onClick(event) {
-    // Check for category label click first
-    const categoryId = this.getCategoryAtMouse();
-    if (categoryId) {
-      this.focusOnCategory(categoryId);
+    // Ignore click events that conclude an orbit drag
+    if (this.pointerDownAt && !isTap(this.pointerDownAt.x, this.pointerDownAt.y, event.clientX, event.clientY)) {
       return;
     }
+    this.setMouseFromEvent(event);
 
-    // Check for quote click
-    const quote = this.getQuoteAtMouse();
-    if (quote) {
-      // If we're focused on a category and click a quote in it, show the quote
-      if (this.focusedCategory && quote.category === this.focusedCategory) {
-        this.onQuoteSelect?.(quote);
-      } else if (!this.focusedCategory) {
-        this.focusOnStar(quote.id);
-        this.onQuoteSelect?.(quote);
-      }
-      return;
-    }
+    const route = routeClick({
+      quote: this.getQuoteAtMouse(),
+      categoryId: this.getCategoryAtMouse(),
+      focusedCategory: this.focusedCategory
+    });
 
-    // Click on empty space - unfocus if focused
-    if (this.focusedCategory) {
-      this.unfocusCategory();
+    switch (route.action) {
+      case 'selectQuote':
+        this.selectedStar = this.stars.get(route.quote.id) || null;
+        if (route.alsoFocusStar) {
+          this.focusOnStar(route.quote.id);
+        }
+        this.onQuoteSelect?.(route.quote);
+        break;
+      case 'focusCategory':
+        this.selectedStar = null;
+        this.focusOnCategory(route.categoryId);
+        break;
+      case 'unfocusCategory':
+        this.selectedStar = null;
+        this.unfocusCategory();
+        break;
+      case 'none':
+        this.selectedStar = null;
+        break;
     }
   }
 
@@ -657,24 +575,47 @@ export class Constellation {
 
     const time = this.clock.getElapsedTime();
 
-    // Gentle floating animation for stars
+    // Float, pulse, and derive opacity/scale from semantic state
     this.stars.forEach((star, id) => {
       const basePos = star.userData.originalPosition;
       if (!basePos) return;
 
-      // Very subtle breathing motion
-      const offset = Math.sin(time * 0.5 + id.charCodeAt(0)) * 0.15;
-      star.position.y = basePos.y + offset;
+      star.position.y = basePos.y + Math.sin(time * 0.5 + id.charCodeAt(0)) * 0.15;
+
+      const pulse = 0.9 + Math.sin(time * 2 + id.charCodeAt(0) * 0.1) * 0.1;
+      const starCategory = star.userData.quote?.category;
+      const isSelected = star === this.selectedStar;
+
+      for (const child of star.children) {
+        if (!child.material) continue;
+        child.material.opacity = computeStarOpacity({
+          baseOpacity: child.userData.baseOpacity,
+          isSprite: child.isSprite === true,
+          pulse,
+          starCategory,
+          focusedCategory: this.focusedCategory,
+          contradictionMode: this.contradictionMode
+        });
+        if (child.isSprite === true) {
+          child.material.color.copy(isSelected ? GLOW_GOLD : GLOW_SILVER);
+        } else {
+          child.material.color.copy(isSelected ? CORE_GOLD : CORE_SILVER);
+        }
+      }
+
+      const scale = computeStarScale({
+        introScale: star.userData.introScale ?? 1,
+        isHovered: star === this.hoveredStar,
+        starCategory,
+        focusedCategory: this.focusedCategory
+      });
+      star.scale.set(scale, scale, scale);
     });
 
-    // Subtle pulsing of star glow
-    this.stars.forEach((star, id) => {
-      star.children.forEach((child) => {
-        if (child instanceof THREE.Sprite) {
-          const pulse = 0.9 + Math.sin(time * 2 + id.charCodeAt(0) * 0.1) * 0.1;
-          child.material.opacity = child.material.opacity * pulse;
-        }
-      });
+    this.categoryLabels.forEach((label, catId) => {
+      label.material.opacity = this.focusedCategory
+        ? (catId === this.focusedCategory ? 1 : 0.2)
+        : label.userData.baseOpacity;
     });
 
     this.controls.update();
