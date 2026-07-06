@@ -4,6 +4,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { categories } from './categories.js';
 import { computeStarOpacity, computeStarScale, routeClick, isTap } from './constellation-helpers.js';
 
+// Star palette: uniform silver, with a gold tinge on the selected star
+const GLOW_SILVER = new THREE.Color(0xffffff);
+const CORE_SILVER = new THREE.Color(0xf0f0f0);
+const GLOW_GOLD = new THREE.Color(0xe8b05c);
+const CORE_GOLD = new THREE.Color(0xffe0a3);
+
 export class Constellation {
   constructor(container, onQuoteSelect, onQuoteHover, onCategoryHover) {
     this.container = container;
@@ -96,28 +102,23 @@ export class Constellation {
     const brightness = Math.min(0.5 + quote.text.length / 500, 1);
     const size = 0.8 + brightness * 0.4;
 
-    // Get category color
-    const category = categories[quote.category];
-    const categoryColor = category ? new THREE.Color(category.color) : new THREE.Color(0x88aaff);
-
-    // Create glow sprite with category color
+    // Uniform silver glow (selected star gets a gold tinge in animate())
     const spriteMaterial = new THREE.SpriteMaterial({
       map: this.createGlowTexture(),
-      color: categoryColor,
+      color: GLOW_SILVER,
       transparent: true,
-      opacity: 0.6 * brightness,
+      opacity: 0.4 * brightness,
       blending: THREE.AdditiveBlending
     });
 
     const sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(size * 4, size * 4, 1);
-    sprite.userData.baseOpacity = 0.6 * brightness;
+    sprite.userData.baseOpacity = 0.4 * brightness;
 
-    // Core point with category tint
+    // Silver core point
     const coreGeometry = new THREE.SphereGeometry(size * 0.3, 16, 16);
-    const coreColor = categoryColor.clone().lerp(new THREE.Color(1, 1, 1), 0.7);
     const coreMaterial = new THREE.MeshBasicMaterial({
-      color: coreColor,
+      color: CORE_SILVER,
       transparent: true,
       opacity: 0.9
     });
@@ -191,9 +192,9 @@ export class Constellation {
 
     const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    gradient.addColorStop(0.2, 'rgba(200, 220, 255, 0.8)');
-    gradient.addColorStop(0.5, 'rgba(150, 180, 255, 0.3)');
-    gradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+    gradient.addColorStop(0.2, 'rgba(218, 222, 230, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(176, 180, 190, 0.3)');
+    gradient.addColorStop(1, 'rgba(140, 144, 154, 0)');
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 128, 128);
@@ -488,6 +489,11 @@ export class Constellation {
     this.focusedCategory = null;
   }
 
+  // Clear the selected star (drops its gold tinge)
+  clearSelection() {
+    this.selectedStar = null;
+  }
+
   // Event handlers
   setMouseFromEvent(event) {
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -536,16 +542,22 @@ export class Constellation {
 
     switch (route.action) {
       case 'selectQuote':
+        this.selectedStar = this.stars.get(route.quote.id) || null;
         if (route.alsoFocusStar) {
           this.focusOnStar(route.quote.id);
         }
         this.onQuoteSelect?.(route.quote);
         break;
       case 'focusCategory':
+        this.selectedStar = null;
         this.focusOnCategory(route.categoryId);
         break;
       case 'unfocusCategory':
+        this.selectedStar = null;
         this.unfocusCategory();
+        break;
+      case 'none':
+        this.selectedStar = null;
         break;
     }
   }
@@ -571,6 +583,7 @@ export class Constellation {
 
       const pulse = 0.9 + Math.sin(time * 2 + id.charCodeAt(0) * 0.1) * 0.1;
       const starCategory = star.userData.quote?.category;
+      const isSelected = star === this.selectedStar;
 
       for (const child of star.children) {
         if (!child.material) continue;
@@ -582,6 +595,11 @@ export class Constellation {
           focusedCategory: this.focusedCategory,
           contradictionMode: this.contradictionMode
         });
+        if (child.isSprite === true) {
+          child.material.color.copy(isSelected ? GLOW_GOLD : GLOW_SILVER);
+        } else {
+          child.material.color.copy(isSelected ? CORE_GOLD : CORE_SILVER);
+        }
       }
 
       const scale = computeStarScale({

@@ -211,6 +211,7 @@ class App {
 
   closeQuoteOverlay() {
     this.quoteOverlay.classList.add('hidden');
+    this.constellation.clearSelection();
   }
 
   openAddQuoteModal() {
