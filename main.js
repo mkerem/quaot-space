@@ -283,9 +283,10 @@ class App {
     if (!text) return;
 
     const attribution = this.attributionInput.value.trim() || null;
-    const isEditing = Boolean(this.editingQuoteId);
+    const editingQuoteId = this.editingQuoteId;
+    const isEditing = Boolean(editingQuoteId);
 
-    // Close modal
+    // Close modal (resets this.editingQuoteId, so capture it above first)
     this.closeAddQuoteModal();
 
     // Show loading state briefly
@@ -296,7 +297,7 @@ class App {
       let activeQuote;
 
       if (isEditing) {
-        const updatedQuote = updateQuote(this.editingQuoteId, text, attribution);
+        const updatedQuote = updateQuote(editingQuoteId, text, attribution);
         if (!updatedQuote) {
           throw new Error('Quote not found for editing');
         }
