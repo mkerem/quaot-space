@@ -155,5 +155,7 @@ export const quoteCategoryMap = {
   'seed-57': 'simplicity',     // moderation
   'seed-58': 'resilience',     // pain/suffering
   'seed-59': 'relationships',  // talkers
-  'seed-60': 'perspective'     // factory rationality
+  'seed-60': 'perspective',    // factory rationality
+  'seed-61': 'wisdom',         // illusion of knowledge (Boorstin)
+  'seed-62': 'self'            // know one's self (Franklin)
 };
