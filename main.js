@@ -13,7 +13,7 @@ class App {
     this.isAddingQuote = false;
     this.selectedQuote = null;
     this.editingQuoteId = null;
-    this.resonanceEnabled = true;
+    this.resonanceEnabled = false;
 
     this.init();
   }

@@ -237,7 +237,7 @@ body:active {
   border-radius: 50%;
   color: #666;
   cursor: pointer;
-  z-index: 5;
+  z-index: 20; /* above the quote overlay so ✨ works while reading */
   opacity: 0.5;
   transition: all 0.3s ease;
 }
@@ -255,19 +255,9 @@ body:active {
   color: #e8b05c;
 }
 
-/* Resonates-with list in the quote overlay */
+/* Related-quotes list in the quote overlay (shown when ✨ is on) */
 #quote-related {
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#quote-related-label {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(232, 176, 92, 0.7);
-  margin-bottom: 0.5rem;
 }
 
 #quote-related-list {
