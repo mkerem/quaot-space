@@ -10,14 +10,14 @@ export function computeStarOpacity({
   pulse,
   starCategory,
   focusedCategory,
-  contradictionMode
+  isResonant
 }) {
   let factor = 1;
   if (focusedCategory) {
     factor = starCategory === focusedCategory ? 1.4 : 0.2;
   }
-  if (contradictionMode) {
-    factor *= 0.5;
+  if (isResonant) {
+    factor *= 1.6;
   }
   const p = isSprite ? pulse : 1;
   return Math.min(1, baseOpacity * factor * p);

@@ -57,35 +57,25 @@ export function cosineSimilarity(a, b) {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-// Get all contradiction pairs for the constellation
-export function getAllContradictions(allQuotes, embeddings, threshold = 0.1) {
-  const pairs = [];
-  const seen = new Set();
+// Most-similar quotes for the resonance threads. The floor keeps weak
+// kinship invisible: better no thread than a misleading one.
+export function getRelatedQuotes(quote, allQuotes, embeddings, count = 3, floor = 0.25) {
+  const emb = embeddings[quote.id];
+  if (!emb) return [];
 
-  for (const quote1 of allQuotes) {
-    const emb1 = embeddings[quote1.id];
-    if (!emb1) continue;
+  const scored = [];
+  for (const other of allQuotes) {
+    if (other.id === quote.id) continue;
 
-    for (const quote2 of allQuotes) {
-      if (quote1.id === quote2.id) continue;
+    const otherEmb = embeddings[other.id];
+    if (!otherEmb) continue;
 
-      const pairKey = [quote1.id, quote2.id].sort().join('-');
-      if (seen.has(pairKey)) continue;
-      seen.add(pairKey);
-
-      const emb2 = embeddings[quote2.id];
-      if (!emb2) continue;
-
-      pairs.push({ quote1, quote2, similarity: cosineSimilarity(emb1, emb2) });
+    const similarity = cosineSimilarity(emb, otherEmb);
+    if (similarity >= floor) {
+      scored.push({ quote: other, similarity });
     }
   }
 
-  // Sort by lowest similarity first (strongest contradictions)
-  pairs.sort((a, b) => a.similarity - b.similarity);
-
-  // Take pairs under the threshold, but always keep a floor of the 10
-  // most-dissimilar pairs so the mode is never visually empty.
-  const below = pairs.filter(p => p.similarity < threshold).length;
-  const count = Math.max(Math.min(10, pairs.length), Math.floor(below * 0.2));
-  return pairs.slice(0, count);
+  scored.sort((a, b) => b.similarity - a.similarity);
+  return scored.slice(0, count);
 }

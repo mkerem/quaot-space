@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/index-dev-CL1L1-Bh.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-dev-BzYxz8K6.css">
+  <script type="module" crossorigin src="./assets/index-dev-LBHZIXcQ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-dev-DYZjirRK.css">
 </head>
 <body>
   <div id="app">
@@ -20,6 +20,10 @@
         <div id="quote-category"></div>
         <blockquote id="quote-text"></blockquote>
         <cite id="quote-attribution"></cite>
+        <div id="quote-related" class="hidden">
+          <div id="quote-related-label">Resonates with</div>
+          <ul id="quote-related-list"></ul>
+        </div>
         <div id="quote-edit-hint" class="hidden">Press 'E' to edit this entry</div>
       </div>
     </div>
@@ -34,8 +38,8 @@
       </div>
     </div>
 
-    <!-- Contradiction mode toggle -->
-    <button id="contradiction-toggle" title="Contradiction Mode">&#9889;</button>
+    <!-- Resonance threads toggle -->
+    <button id="resonance-toggle" class="active" title="Resonance threads">&#10024;</button>
 
     <!-- Initial hint -->
     <div id="hint">

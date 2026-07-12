@@ -12,31 +12,31 @@ describe('computeStarOpacity', () => {
   it('is stable over repeated frames (no compounding decay)', () => {
     let o;
     for (let i = 0; i < 1000; i++) {
-      o = computeStarOpacity({ ...base, pulse: 0.9, focusedCategory: null, contradictionMode: false });
+      o = computeStarOpacity({ ...base, pulse: 0.9, focusedCategory: null });
     }
     expect(o).toBeCloseTo(0.54); // 0.6 * 0.9 every frame, forever
   });
 
   it('ignores pulse for non-sprite children (cores)', () => {
-    const o = computeStarOpacity({ baseOpacity: 0.9, isSprite: false, pulse: 0.8, starCategory: 'wisdom', focusedCategory: null, contradictionMode: false });
+    const o = computeStarOpacity({ baseOpacity: 0.9, isSprite: false, pulse: 0.8, starCategory: 'wisdom', focusedCategory: null });
     expect(o).toBe(0.9);
   });
 
   it('brightens in-category and dims out-of-category stars when focused', () => {
-    const inCat = computeStarOpacity({ ...base, focusedCategory: 'wisdom', contradictionMode: false });
-    const outCat = computeStarOpacity({ ...base, starCategory: 'courage', focusedCategory: 'wisdom', contradictionMode: false });
+    const inCat = computeStarOpacity({ ...base, focusedCategory: 'wisdom' });
+    const outCat = computeStarOpacity({ ...base, starCategory: 'courage', focusedCategory: 'wisdom' });
     expect(inCat).toBeCloseTo(Math.min(1, 0.6 * 1.4));
     expect(outCat).toBeCloseTo(0.6 * 0.2);
   });
 
-  it('halves opacity in contradiction mode and round-trips when disabled', () => {
-    const on = computeStarOpacity({ ...base, focusedCategory: null, contradictionMode: true });
-    const off = computeStarOpacity({ ...base, focusedCategory: null, contradictionMode: false });
-    expect(on).toBeCloseTo(off / 2);
+  it('brightens resonant stars and round-trips when not resonant', () => {
+    const on = computeStarOpacity({ ...base, focusedCategory: null, isResonant: true });
+    const off = computeStarOpacity({ ...base, focusedCategory: null });
+    expect(on).toBeCloseTo(Math.min(1, off * 1.6));
   });
 
   it('clamps to 1', () => {
-    const o = computeStarOpacity({ baseOpacity: 0.9, isSprite: true, pulse: 1, starCategory: 'wisdom', focusedCategory: 'wisdom', contradictionMode: false });
+    const o = computeStarOpacity({ baseOpacity: 0.9, isSprite: true, pulse: 1, starCategory: 'wisdom', focusedCategory: 'wisdom' });
     expect(o).toBe(1);
   });
 });

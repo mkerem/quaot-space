@@ -22,9 +22,8 @@ export class Constellation {
     this.embeddings = {};
     this.stars = new Map(); // quoteId -> mesh
     this.categoryLabels = new Map(); // categoryId -> sprite
-    this.connectionLines = [];
-    this.contradictionLines = [];
-    this.contradictionMode = false;
+    this.resonanceLines = [];
+    this.resonantIds = new Set();
 
     this.hoveredStar = null;
     this.selectedStar = null;
@@ -73,13 +72,10 @@ export class Constellation {
     // Groups
     this.starsGroup = new THREE.Group();
     this.linesGroup = new THREE.Group();
-    this.contradictionGroup = new THREE.Group();
     this.labelsGroup = new THREE.Group();
     this.scene.add(this.starsGroup);
     this.scene.add(this.linesGroup);
-    this.scene.add(this.contradictionGroup);
     this.scene.add(this.labelsGroup);
-    this.contradictionGroup.visible = false;
 
     // Event listeners
     window.addEventListener('resize', () => this.onResize());
@@ -251,8 +247,8 @@ export class Constellation {
       this.categoryLabels.set(categoryId, label);
     }
 
-    // Clear connection lines
-    this.clearConnectionLines();
+    // Clear resonance threads (stars were rebuilt)
+    this.clearResonance();
   }
 
   // Add a single star to the constellation
@@ -291,18 +287,19 @@ export class Constellation {
     animate();
   }
 
-  // Show connection lines to nearest neighbors
-  showConnections(quoteId, neighbors) {
-    this.clearConnectionLines();
+  // Draw resonance threads from the selected star to its kin. related is
+  // [{quote, similarity}]; thread opacity scales gently with similarity.
+  showResonance(quoteId, related) {
+    this.clearResonance();
 
-    const sourceStar = this.stars.get(quoteId);
+    const sourceStar = quoteId ? this.stars.get(quoteId) : null;
     if (!sourceStar) return;
 
     const sourcePos = sourceStar.userData.originalPosition;
     if (!sourcePos) return;
 
-    for (const neighbor of neighbors) {
-      const targetStar = this.stars.get(neighbor.id);
+    for (const { quote, similarity } of related) {
+      const targetStar = this.stars.get(quote.id);
       if (!targetStar) continue;
 
       const targetPos = targetStar.userData.originalPosition;
@@ -315,76 +312,28 @@ export class Constellation {
 
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const material = new THREE.LineBasicMaterial({
-        color: 0x6699ff,
+        color: GLOW_GOLD,
         transparent: true,
-        opacity: 0.6
+        opacity: 0.15 + Math.min(Math.max(similarity, 0), 1) * 0.35,
+        blending: THREE.AdditiveBlending
       });
 
       const line = new THREE.Line(geometry, material);
       this.linesGroup.add(line);
-      this.connectionLines.push(line);
+      this.resonanceLines.push(line);
+      this.resonantIds.add(quote.id);
     }
   }
 
-  // Clear connection lines
-  clearConnectionLines() {
-    for (const line of this.connectionLines) {
+  // Clear resonance threads and related-star brightening
+  clearResonance() {
+    for (const line of this.resonanceLines) {
       this.linesGroup.remove(line);
       line.geometry.dispose();
       line.material.dispose();
     }
-    this.connectionLines = [];
-  }
-
-  // Show contradiction lines
-  showContradictions(contradictionPairs) {
-    this.clearContradictions();
-
-    for (const pair of contradictionPairs) {
-      const star1 = this.stars.get(pair.quote1.id);
-      const star2 = this.stars.get(pair.quote2.id);
-
-      if (!star1 || !star2) continue;
-
-      // Get positions from userData (the actual positions)
-      const pos1 = star1.userData.originalPosition;
-      const pos2 = star2.userData.originalPosition;
-
-      if (!pos1 || !pos2) continue;
-
-      const points = [
-        new THREE.Vector3(pos1.x, pos1.y, pos1.z),
-        new THREE.Vector3(pos2.x, pos2.y, pos2.z)
-      ];
-
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: 0xff5555,
-        transparent: true,
-        opacity: 0.7,
-        linewidth: 2
-      });
-
-      const line = new THREE.Line(geometry, material);
-      this.contradictionGroup.add(line);
-      this.contradictionLines.push(line);
-    }
-  }
-
-  // Clear contradiction lines
-  clearContradictions() {
-    for (const line of this.contradictionLines) {
-      this.contradictionGroup.remove(line);
-      line.geometry.dispose();
-      line.material.dispose();
-    }
-    this.contradictionLines = [];
-  }
-
-  // Toggle contradiction mode (opacity is derived per-frame in animate())
-  setContradictionMode(enabled) {
-    this.contradictionMode = enabled;
-    this.contradictionGroup.visible = enabled;
+    this.resonanceLines = [];
+    this.resonantIds.clear();
   }
 
   // Focus camera on a specific star
@@ -490,9 +439,10 @@ export class Constellation {
     this.focusedCategory = null;
   }
 
-  // Clear the selected star (drops its gold tinge)
+  // Clear the selected star (drops its gold tinge and resonance threads)
   clearSelection() {
     this.selectedStar = null;
+    this.clearResonance();
   }
 
   // Event handlers
@@ -594,7 +544,7 @@ export class Constellation {
           pulse,
           starCategory,
           focusedCategory: this.focusedCategory,
-          contradictionMode: this.contradictionMode
+          isResonant: this.resonantIds.has(id)
         });
         if (child.isSprite === true) {
           child.material.color.copy(isSelected ? GLOW_GOLD : GLOW_SILVER);

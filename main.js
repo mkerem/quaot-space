@@ -1,7 +1,7 @@
 // Quote Constellation - Main Entry Point
 import { Constellation } from './constellation.js';
 import { loadQuotes, addQuote, updateQuote, loadEmbeddings, setEmbedding } from './quotes.js';
-import { generateEmbedding, getAllContradictions } from './embeddings.js';
+import { generateEmbedding, getRelatedQuotes } from './embeddings.js';
 import { categories, categorizeQuote, getPositionInCluster, quoteCategoryMap } from './categories.js';
 
 class App {
@@ -13,8 +13,7 @@ class App {
     this.isAddingQuote = false;
     this.selectedQuote = null;
     this.editingQuoteId = null;
-    this.contradictionMode = false;
-    this.contradictionPairs = [];
+    this.resonanceEnabled = true;
 
     this.init();
   }
@@ -30,7 +29,9 @@ class App {
     this.quoteInput = document.getElementById('quote-input');
     this.attributionInput = document.getElementById('attribution-input');
     this.saveQuoteButton = document.getElementById('save-quote-button');
-    this.contradictionToggle = document.getElementById('contradiction-toggle');
+    this.resonanceToggle = document.getElementById('resonance-toggle');
+    this.relatedSection = document.getElementById('quote-related');
+    this.relatedList = document.getElementById('quote-related-list');
     this.editHint = document.getElementById('quote-edit-hint');
     this.addQuoteHint = document.getElementById('add-quote-hint');
     this.hint = document.getElementById('hint');
@@ -102,10 +103,6 @@ class App {
     this.constellation.updateConstellation(this.quotes, this.positions, this.embeddings);
     console.log('Constellation displayed with initial positions');
 
-    // Pre-compute contradictions with whatever embeddings we have
-    this.contradictionPairs = getAllContradictions(this.quotes, this.embeddings);
-    this.constellation.showContradictions(this.contradictionPairs);
-
     // Fill any missing embeddings in the background (normally only quotes
     // added before this feature shipped; new quotes embed on add)
     const quotesNeedingEmbeddings = this.quotes.filter(q => !this.embeddings[q.id]);
@@ -142,10 +139,9 @@ class App {
       }
     }
 
-    // Update contradictions with new embeddings
-    if (Object.keys(this.embeddings).length > 0) {
-      this.contradictionPairs = getAllContradictions(this.quotes, this.embeddings);
-      this.constellation.showContradictions(this.contradictionPairs);
+    // Refresh threads if a quote is open (its kin may have just embedded)
+    if (this.selectedQuote) {
+      this.renderResonance(this.selectedQuote);
     }
   }
 
@@ -158,8 +154,8 @@ class App {
     this.attributionInput.addEventListener('keydown', (e) => this.onQuoteInputKeyDown(e));
     this.saveQuoteButton.addEventListener('click', () => this.submitNewQuote());
 
-    // Contradiction toggle
-    this.contradictionToggle.addEventListener('click', () => this.toggleContradictionMode());
+    // Resonance toggle
+    this.resonanceToggle.addEventListener('click', () => this.toggleResonance());
 
     // Close quote overlay on click
     this.quoteOverlay.addEventListener('click', (e) => {
@@ -219,6 +215,42 @@ class App {
     this.quoteAttribution.textContent = quote.attribution || '';
     this.editHint.classList.toggle('hidden', !quote.userAdded);
     this.quoteOverlay.classList.remove('hidden');
+
+    this.renderResonance(quote);
+  }
+
+  // Draw threads to the quote's kin and list them in the overlay
+  renderResonance(quote) {
+    const related = this.resonanceEnabled
+      ? getRelatedQuotes(quote, this.quotes, this.embeddings)
+      : [];
+
+    this.constellation.showResonance(quote.id, related);
+
+    this.relatedList.innerHTML = '';
+    this.relatedSection.classList.toggle('hidden', related.length === 0);
+
+    for (const { quote: relatedQuote } of related) {
+      const item = document.createElement('li');
+      item.textContent = relatedQuote.attribution
+        || `“${relatedQuote.text.length > 60 ? relatedQuote.text.slice(0, 60).trimEnd() + '…' : relatedQuote.text}”`;
+      item.addEventListener('click', () => this.hopToQuote(relatedQuote));
+      this.relatedList.appendChild(item);
+    }
+  }
+
+  // Hop navigation: select a related quote and turn the camera toward it
+  hopToQuote(quote) {
+    this.constellation.focusOnStar(quote.id);
+    this.onQuoteSelect(quote);
+  }
+
+  toggleResonance() {
+    this.resonanceEnabled = !this.resonanceEnabled;
+    this.resonanceToggle.classList.toggle('active', this.resonanceEnabled);
+    if (this.selectedQuote) {
+      this.renderResonance(this.selectedQuote);
+    }
   }
 
   onQuoteHover(quote) {
@@ -325,12 +357,6 @@ class App {
         const embedding = await generateEmbedding(text);
         setEmbedding(activeQuote.id, embedding);
         this.embeddings[activeQuote.id] = embedding;
-
-        // Update contradictions
-        this.contradictionPairs = getAllContradictions(this.quotes, this.embeddings);
-        if (this.contradictionMode) {
-          this.constellation.showContradictions(this.contradictionPairs);
-        }
       } catch (e) {
         console.warn('Could not generate embedding for new quote:', e);
       }
@@ -342,11 +368,6 @@ class App {
     this.loading.classList.add('hidden');
   }
 
-  toggleContradictionMode() {
-    this.contradictionMode = !this.contradictionMode;
-    this.contradictionToggle.classList.toggle('active', this.contradictionMode);
-    this.constellation.setContradictionMode(this.contradictionMode);
-  }
 }
 
 // Start the app

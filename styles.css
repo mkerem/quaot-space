@@ -224,8 +224,8 @@ body:active {
   text-align: center;
 }
 
-/* Contradiction toggle */
-#contradiction-toggle {
+/* Resonance threads toggle */
+#resonance-toggle {
   position: absolute;
   bottom: 2rem;
   right: 2rem;
@@ -242,17 +242,50 @@ body:active {
   transition: all 0.3s ease;
 }
 
-#contradiction-toggle:hover {
+#resonance-toggle:hover {
   opacity: 1;
   background: rgba(255, 255, 255, 0.1);
   color: #f0f0f0;
 }
 
-#contradiction-toggle.active {
+#resonance-toggle.active {
   opacity: 1;
-  background: rgba(255, 100, 100, 0.2);
-  border-color: rgba(255, 100, 100, 0.4);
-  color: #ff6b6b;
+  background: rgba(232, 176, 92, 0.15);
+  border-color: rgba(232, 176, 92, 0.4);
+  color: #e8b05c;
+}
+
+/* Resonates-with list in the quote overlay */
+#quote-related {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#quote-related-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 176, 92, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+#quote-related-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#quote-related-list li {
+  padding: 0.3rem 0;
+  color: #999;
+  font-style: italic;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#quote-related-list li:hover {
+  color: #ffe0a3;
 }
 
 /* Initial hint */
