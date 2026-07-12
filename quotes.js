@@ -26,27 +26,19 @@ export const seedQuotes = [
   },
   {
     text: "Life is mostly froth and bubble; two things stand like stone: kindness in another's trouble, courage in our own.",
-    attribution: "Adam Lindsey Gordon"
+    attribution: "Adam Lindsay Gordon"
   },
   {
     text: "It's a little embarrassing that after 45 years of research and study, the best advice I can give people is to be a little kinder to each other.",
     attribution: "Aldous Huxley"
   },
   {
-    text: "God grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to always tell the difference.",
-    attribution: "Kurt Vonnegut"
-  },
-  {
-    text: "Most people overestimate what they can do in one year and underestimate what they can do in ten years.",
-    attribution: "Bill Gates"
+    text: "God grant me the serenity to accept the things I cannot change, courage to change the things I can, and wisdom to know the difference.",
+    attribution: "Reinhold Niebuhr"
   },
   {
     text: "Simple things should be simple. Complex things should be possible.",
     attribution: "Alan Kay"
-  },
-  {
-    text: "Keep away from people who try to belittle your ambitions. Small people always do that, but the really great make you feel that you, too, can become great.",
-    attribution: "Mark Twain"
   },
   {
     text: "The amount of energy necessary to refute bullshit is an order of magnitude bigger than to produce it.",
@@ -61,8 +53,8 @@ export const seedQuotes = [
     attribution: "Thomas Huxley"
   },
   {
-    text: "I wish to do something great and wonderful, but I must start by doing the little things like they were great and wonderful.",
-    attribution: "Albert Einstein"
+    text: "I long to accomplish a great and noble task, but it is my chief duty to accomplish small tasks as if they were great and noble.",
+    attribution: "Helen Keller"
   },
   {
     text: "There is a step beyond thinking of yourself as x but tolerating y: not even to consider yourself an x. The more labels you have for yourself, the dumber they make you.",
@@ -90,7 +82,7 @@ export const seedQuotes = [
   },
   {
     text: "If you chase two rabbits, you will not catch either one.",
-    attribution: "Confucius"
+    attribution: "Proverb"
   },
   {
     text: "It is wiser to find out than to suppose.",
@@ -146,7 +138,7 @@ export const seedQuotes = [
   },
   {
     text: "I am not young enough to know everything.",
-    attribution: "Oscar Wilde"
+    attribution: "J.M. Barrie"
   },
   {
     text: "One should use common words to say uncommon things.",
@@ -165,12 +157,12 @@ export const seedQuotes = [
     attribution: "Hal Boyle"
   },
   {
-    text: "Reality is merely an illusion, albeit a very persistent one.",
+    text: "The distinction between past, present and future is only a stubbornly persistent illusion.",
     attribution: "Albert Einstein"
   },
   {
     text: "It is amazing what you can accomplish if you do not care who gets the credit.",
-    attribution: "Harry Truman"
+    attribution: null
   },
   {
     text: "The reasonable man adapts himself to the world; the unreasonable one persists in trying to adapt the world to himself. Therefore all progress depends on the unreasonable man.",
@@ -209,14 +201,6 @@ export const seedQuotes = [
     attribution: "Jeremy Goldberg"
   },
   {
-    text: "If you want freedom, you need to have discipline. The more discipline you have, the more you'll be able to do what you want.",
-    attribution: "Jocko Willink"
-  },
-  {
-    text: "Discipline equals freedom.",
-    attribution: null
-  },
-  {
     text: "A man said to the universe: 'Sir, I exist!' 'However,' replied the universe, 'That fact has not created in me a sense of obligation.'",
     attribution: "Stephen Crane"
   },
@@ -230,7 +214,7 @@ export const seedQuotes = [
   },
   {
     text: "Everything in moderation, including moderation.",
-    attribution: "Oscar Wilde"
+    attribution: null
   },
   {
     text: "Pain is inevitable. Suffering is optional.",
@@ -251,6 +235,18 @@ export const seedQuotes = [
   {
     text: "There are three things that are extremely hard: steel, a diamond, and to know one's self.",
     attribution: "Benjamin Franklin"
+  },
+  {
+    text: "The first principle is that you must not fool yourself — and you are the easiest person to fool.",
+    attribution: "Richard Feynman"
+  },
+  {
+    text: "Attention is the rarest and purest form of generosity.",
+    attribution: "Simone Weil"
+  },
+  {
+    text: "Be patient toward all that is unsolved in your heart and try to love the questions themselves.",
+    attribution: "Rainer Maria Rilke"
   }
 ];
 
