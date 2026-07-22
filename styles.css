@@ -4,12 +4,27 @@
   box-sizing: border-box;
 }
 
+:root {
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-meta: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --void: #050505;
+  --text-primary: rgba(246, 246, 242, 0.86);
+  --text-secondary: rgba(246, 246, 242, 0.48);
+  --text-faint: rgba(246, 246, 242, 0.28);
+  --rule: rgba(246, 246, 242, 0.14);
+  --surface: rgba(246, 246, 242, 0.045);
+  --ease-emerge: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 body {
-  font-family: 'Crimson Text', Georgia, serif;
-  background: #0a0a0a;
-  color: #e8e8e8;
+  font-family: var(--font-display);
+  font-weight: 300;
+  background: var(--void);
+  color: var(--text-primary);
   overflow: hidden;
   cursor: grab;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body:active {
@@ -39,7 +54,7 @@ body:active {
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.03;
+  opacity: 0.02;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   z-index: 1;
@@ -55,10 +70,11 @@ body:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 10, 0.85);
+  background: rgba(5, 5, 5, 0.82);
+  backdrop-filter: blur(8px);
   z-index: 10;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.7s var(--ease-emerge), backdrop-filter 0.7s var(--ease-emerge);
 }
 
 #quote-overlay.hidden {
@@ -67,21 +83,20 @@ body:active {
 }
 
 #quote-content {
-  max-width: 700px;
-  padding: 2rem 3rem;
-  text-align: center;
+  width: min(86vw, 760px);
+  padding: 3rem;
+  text-align: left;
 }
 
 #quote-category {
   display: inline-block;
-  padding: 0.3rem 0.8rem;
-  margin-bottom: 1.5rem;
-  font-size: 0.85rem;
+  margin-bottom: 2.25rem;
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #aaa;
+  letter-spacing: 0.18em;
+  color: var(--text-faint);
 }
 
 #quote-category:empty {
@@ -89,16 +104,20 @@ body:active {
 }
 
 #quote-text {
-  font-size: 1.75rem;
-  line-height: 1.6;
-  font-style: italic;
-  margin-bottom: 1.5rem;
-  color: #f0f0f0;
+  font-size: clamp(1.65rem, 3.1vw, 2.4rem);
+  font-weight: 300;
+  line-height: 1.42;
+  letter-spacing: -0.015em;
+  font-style: normal;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
 }
 
 #quote-attribution {
-  font-size: 1.1rem;
-  color: #888;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
   font-style: normal;
 }
 
@@ -112,9 +131,10 @@ body:active {
 
 #quote-edit-hint {
   margin-top: 1rem;
-  font-size: 0.85rem;
-  color: #666;
-  letter-spacing: 0.04em;
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
 }
 
 #quote-edit-hint.hidden {
@@ -131,10 +151,11 @@ body:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 10, 10, 0.9);
+  background: rgba(5, 5, 5, 0.92);
+  backdrop-filter: blur(12px);
   z-index: 20;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.7s var(--ease-emerge);
 }
 
 #add-quote-modal.hidden {
@@ -151,66 +172,70 @@ body:active {
   width: 100%;
   height: 150px;
   padding: 1.5rem;
-  font-family: 'Crimson Text', Georgia, serif;
-  font-size: 1.4rem;
-  line-height: 1.5;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #f0f0f0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1.6;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--text-primary);
   resize: none;
   outline: none;
   transition: border-color 0.2s ease;
 }
 
 #quote-input:focus {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(246, 246, 242, 0.32);
 }
 
 #quote-input::placeholder {
-  color: #555;
+  color: var(--text-faint);
 }
 
 #attribution-input {
   width: 100%;
   margin-top: 1rem;
   padding: 1rem 1.5rem;
-  font-family: 'Crimson Text', Georgia, serif;
-  font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  color: #888;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 300;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--text-secondary);
   outline: none;
   transition: border-color 0.2s ease;
 }
 
 #attribution-input:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(246, 246, 242, 0.28);
 }
 
 #attribution-input::placeholder {
-  color: #444;
+  color: var(--text-faint);
 }
 
 #save-quote-button {
   width: 100%;
   margin-top: 0.9rem;
   padding: 0.75rem 1rem;
-  font-family: 'Crimson Text', Georgia, serif;
-  font-size: 1rem;
-  letter-spacing: 0.04em;
-  color: #ddd;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 #save-quote-button:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: rgba(246, 246, 242, 0.1);
+  color: var(--text-primary);
 }
 
 #save-quote-button:active {
@@ -219,8 +244,10 @@ body:active {
 
 #add-quote-hint {
   margin-top: 1rem;
-  font-size: 0.9rem;
-  color: #555;
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
   text-align: center;
 }
 
@@ -234,11 +261,11 @@ body:active {
   font-size: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  color: #666;
+  border-radius: 3px;
+  color: var(--text-faint);
   cursor: pointer;
   z-index: 20; /* above the quote overlay so ✨ works while reading */
-  opacity: 0.5;
+  opacity: 0.65;
   transition: all 0.3s ease;
 }
 
@@ -267,9 +294,12 @@ body:active {
 }
 
 #quote-related-list li {
-  padding: 0.3rem 0;
-  color: #999;
-  font-style: italic;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--rule);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-style: normal;
+  line-height: 1.55;
   cursor: pointer;
   transition: color 0.2s ease;
 }
@@ -284,8 +314,11 @@ body:active {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 1rem;
-  color: #555;
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
   z-index: 5;
   pointer-events: none;
   opacity: 1;
@@ -305,10 +338,12 @@ body:active {
   max-width: min(90vw, 640px);
   padding: 0.7rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(20, 20, 20, 0.92);
-  color: #d6d6d6;
-  font-size: 0.95rem;
+  border-radius: 3px;
+  background: rgba(12, 12, 12, 0.94);
+  color: var(--text-secondary);
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
   text-align: center;
   opacity: 1;
   transition: opacity 0.35s ease;
@@ -332,9 +367,12 @@ body:active {
   justify-content: center;
   gap: 1rem;
   z-index: 100;
-  background: #0a0a0a;
-  color: #555;
-  font-size: 1rem;
+  background: var(--void);
+  color: var(--text-faint);
+  font-family: var(--font-meta);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   transition: opacity 0.5s ease;
 }
 
@@ -368,11 +406,13 @@ body:active {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   #quote-text {
-    font-size: 1.4rem;
+    font-size: 1.55rem;
+    line-height: 1.45;
   }
 
   #quote-content {
-    padding: 1.5rem;
+    width: 100%;
+    padding: 1.75rem;
   }
 
   #hint {

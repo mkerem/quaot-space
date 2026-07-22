@@ -35,7 +35,7 @@ export class Constellation {
   init() {
     // Scene setup
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0a0a);
+    this.scene.background = new THREE.Color(0x050505);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -143,26 +143,26 @@ export class Constellation {
     // Calculate size and brightness based on count
     // Normalize: smallest gets ~0.4, largest gets 1.0
     const normalizedSize = 0.4 + (count / maxCount) * 0.6;
-    const fontSize = Math.floor(28 + normalizedSize * 20); // 28-48px
-    const brightness = Math.floor(150 + normalizedSize * 105); // 150-255
+    const fontSize = Math.floor(24 + normalizedSize * 16); // 30-40px
+    const brightness = Math.floor(176 + normalizedSize * 70); // 176-246
 
     // Draw text
     ctx.fillStyle = 'transparent';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.font = `${fontSize}px "Crimson Text", Georgia, serif`;
+    ctx.font = `300 ${fontSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     // White/gray based on cluster size (bigger = brighter)
-    ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.9)`;
-    ctx.fillText(category.name, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${Math.max(0, brightness - 4)}, 0.82)`;
+    ctx.fillText(category.name.toLowerCase(), canvas.width / 2, canvas.height / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
     const spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.5 + normalizedSize * 0.4 // 0.5-0.9 opacity
+      opacity: 0.42 + normalizedSize * 0.34 // 0.42-0.76 opacity
     });
 
     const sprite = new THREE.Sprite(spriteMaterial);
@@ -174,7 +174,7 @@ export class Constellation {
       category.position.y + 25,
       category.position.z
     );
-    sprite.userData = { categoryId, category, count, baseOpacity: 0.5 + normalizedSize * 0.4 };
+    sprite.userData = { categoryId, category, count, baseOpacity: 0.42 + normalizedSize * 0.34 };
 
     return sprite;
   }
