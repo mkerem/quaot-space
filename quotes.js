@@ -253,6 +253,8 @@ export const seedQuotes = [
 // LocalStorage keys
 const STORAGE_KEY = 'quote-constellation-quotes';
 const EMBEDDINGS_KEY = 'quote-constellation-embeddings';
+const SEED_DATA_VERSION_KEY = 'quote-constellation-seed-version';
+const SEED_DATA_VERSION = '2026-10-semantic-remap-v1';
 
 // Generate a simple UUID
 function generateId() {
@@ -263,24 +265,39 @@ function generateId() {
   });
 }
 
-// Load quotes from localStorage or return seed quotes
-export function loadQuotes() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to load quotes from localStorage:', e);
-  }
-
-  // Initialize with seed quotes
-  const initialQuotes = seedQuotes.map((q, index) => ({
+function createSeedQuotes() {
+  return seedQuotes.map((q, index) => ({
     id: `seed-${index}`,
     text: q.text,
     attribution: q.attribution,
     userAdded: false
   }));
+}
+
+// Load quotes from localStorage. When the curated seed set changes, replace
+// stale seed entries while preserving anything the visitor added themselves.
+export function loadQuotes() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const storedVersion = localStorage.getItem(SEED_DATA_VERSION_KEY);
+    if (stored && storedVersion === SEED_DATA_VERSION) {
+      return JSON.parse(stored);
+    }
+
+    const storedQuotes = stored ? JSON.parse(stored) : [];
+    const userQuotes = Array.isArray(storedQuotes)
+      ? storedQuotes.filter((quote) => quote?.userAdded)
+      : [];
+    const migratedQuotes = [...createSeedQuotes(), ...userQuotes];
+
+    saveQuotes(migratedQuotes);
+    localStorage.setItem(SEED_DATA_VERSION_KEY, SEED_DATA_VERSION);
+    return migratedQuotes;
+  } catch (e) {
+    console.warn('Failed to load quotes from localStorage:', e);
+  }
+
+  const initialQuotes = createSeedQuotes();
 
   saveQuotes(initialQuotes);
   return initialQuotes;

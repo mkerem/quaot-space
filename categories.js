@@ -104,58 +104,57 @@ export const quoteCategoryMap = {
   'seed-6': 'relationships',   // kindness/courage
   'seed-7': 'relationships',   // kinder to each other
   'seed-8': 'resilience',      // serenity/accept
-  'seed-9': 'perspective',     // overestimate/underestimate
-  'seed-10': 'simplicity',     // simple things
-  'seed-11': 'creativity',     // ambitions/great
-  'seed-12': 'wisdom',         // refute bullshit
-  'seed-13': 'perspective',    // butterfly effect
-  'seed-14': 'courage',        // action not knowledge
-  'seed-15': 'courage',        // little things great
-  'seed-16': 'self',           // labels
-  'seed-17': 'courage',        // courage/life expands
-  'seed-18': 'wisdom',         // brain telling me
-  'seed-19': 'simplicity',     // busy is a decision
-  'seed-20': 'wisdom',         // television/book
-  'seed-21': 'courage',        // take sides
-  'seed-22': 'simplicity',     // chase two rabbits
-  'seed-23': 'wisdom',         // find out vs suppose
-  'seed-24': 'resilience',     // punched in mouth
-  'seed-25': 'relationships',  // laugh together
-  'seed-26': 'courage',        // curiosity/fear
-  'seed-27': 'perspective',    // oneness
-  'seed-28': 'wisdom',         // extent of ignorance
-  'seed-29': 'relationships',  // shared joy/sorrow
-  'seed-30': 'relationships',  // families
-  'seed-31': 'wisdom',         // education expensive
-  'seed-32': 'courage',        // obedience
-  'seed-33': 'perspective',    // appreciate world
-  'seed-34': 'courage',        // aggressive/humble
-  'seed-35': 'perspective',    // arbitrary natural
-  'seed-36': 'wisdom',         // not young enough
-  'seed-37': 'creativity',     // common words uncommon
-  'seed-38': 'perspective',    // distressed external
-  'seed-39': 'simplicity',     // eliminate not accumulate
-  'seed-40': 'resilience',     // river no doubt
-  'seed-41': 'perspective',    // reality illusion
-  'seed-42': 'relationships',  // credit
-  'seed-43': 'courage',        // unreasonable man
-  'seed-44': 'self',           // if not for myself
-  'seed-45': 'perspective',    // events vs judgments
-  'seed-46': 'perspective',    // walking distance
-  'seed-47': 'wisdom',         // island of knowledge
-  'seed-48': 'wisdom',         // roughly right
-  'seed-49': 'self',           // changing myself
-  'seed-50': 'courage',        // women progress
-  'seed-51': 'courage',        // courage vs stupidity
-  'seed-52': 'courage',        // discipline freedom
-  'seed-53': 'simplicity',     // discipline equals freedom
-  'seed-54': 'perspective',    // universe obligation
-  'seed-55': 'wisdom',         // loudest not smartest
-  'seed-56': 'creativity',     // build your own things
-  'seed-57': 'simplicity',     // moderation
-  'seed-58': 'resilience',     // pain/suffering
-  'seed-59': 'relationships',  // talkers
-  'seed-60': 'perspective',    // factory rationality
-  'seed-61': 'wisdom',         // illusion of knowledge (Boorstin)
-  'seed-62': 'self'            // know one's self (Franklin)
+  'seed-9': 'simplicity',       // simple things should be simple
+  'seed-10': 'wisdom',         // effort required to refute bullshit
+  'seed-11': 'perspective',    // butterfly effect
+  'seed-12': 'courage',        // action over knowledge
+  'seed-13': 'simplicity',     // focus on making small tasks great
+  'seed-14': 'self',           // identity labels
+  'seed-15': 'courage',        // courage expands life
+  'seed-16': 'wisdom',         // brain judging itself
+  'seed-17': 'simplicity',     // time and priorities
+  'seed-18': 'wisdom',         // television and books
+  'seed-19': 'courage',        // take sides
+  'seed-20': 'simplicity',     // chase one rabbit
+  'seed-21': 'wisdom',         // find out rather than suppose
+  'seed-22': 'resilience',     // plans meet adversity
+  'seed-23': 'relationships',  // laugh together
+  'seed-24': 'courage',        // curiosity over fear
+  'seed-25': 'perspective',    // oneness and perception
+  'seed-26': 'wisdom',         // know the extent of ignorance
+  'seed-27': 'relationships',  // shared joy and sorrow
+  'seed-28': 'relationships',  // families
+  'seed-29': 'wisdom',         // education and ignorance
+  'seed-30': 'courage',        // moral disobedience
+  'seed-31': 'perspective',    // appreciate the world
+  'seed-32': 'courage',        // aggressive action, humble experience
+  'seed-33': 'perspective',    // arbitrary systems appear natural
+  'seed-34': 'wisdom',         // not young enough to know everything
+  'seed-35': 'creativity',     // common words, uncommon things
+  'seed-36': 'perspective',    // distress follows interpretation
+  'seed-37': 'simplicity',     // eliminate rather than accumulate
+  'seed-38': 'resilience',     // river without doubt
+  'seed-39': 'perspective',    // time as illusion
+  'seed-40': 'self',           // identity without attachment to credit
+  'seed-41': 'courage',        // unreasonable people create progress
+  'seed-42': 'self',           // self-interest and identity
+  'seed-43': 'perspective',    // judgments, not events
+  'seed-44': 'perspective',    // walking distance reframed by time
+  'seed-45': 'wisdom',         // knowledge exposes ignorance
+  'seed-46': 'wisdom',         // roughly right over precisely wrong
+  'seed-47': 'self',           // change oneself
+  'seed-48': 'courage',        // ignore precedent and progress
+  'seed-49': 'courage',        // courage despite pain
+  'seed-50': 'perspective',    // the indifferent universe
+  'seed-51': 'wisdom',         // loudness is not intelligence
+  'seed-52': 'creativity',     // build and influence the world
+  'seed-53': 'simplicity',     // moderation
+  'seed-54': 'resilience',     // pain and suffering
+  'seed-55': 'relationships',  // the beauty of conversation
+  'seed-56': 'perspective',    // systems reproduce their rationality
+  'seed-57': 'wisdom',         // illusion of knowledge
+  'seed-58': 'self',           // know oneself
+  'seed-59': 'wisdom',         // do not fool yourself
+  'seed-60': 'relationships',  // attention as generosity
+  'seed-61': 'wisdom'          // patience with unresolved questions
 };

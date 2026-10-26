@@ -74,9 +74,10 @@ class App {
     this.quotes = loadQuotes();
     console.log(`Loaded ${this.quotes.length} quotes`);
 
-    // Precomputed seed embeddings, overridden by any locally computed ones
+    // Preserve locally computed embeddings for user quotes, but let the
+    // current build's seed embeddings replace stale vectors with reused IDs.
     const precomputed = await this.loadPrecomputedEmbeddings();
-    this.embeddings = { ...precomputed, ...loadEmbeddings() };
+    this.embeddings = { ...loadEmbeddings(), ...precomputed };
 
     // Categorize quotes and position them in themed clusters
     const categoryQuotes = {}; // categoryId -> [quotes]
